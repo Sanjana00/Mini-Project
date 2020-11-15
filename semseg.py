@@ -1,11 +1,13 @@
 from torchvision import models
 import numpy as np
 import sys
+import os
 from PIL import Image
 import torch
 import cv2
 import matplotlib.pyplot as plt
 import torchvision.transforms as T
+from autocrop import Cropper
 
 def decode_segmap(image, source, nc = 21):
     label_colours = np.array([(0, 0, 0), 
@@ -37,7 +39,7 @@ def decode_segmap(image, source, nc = 21):
 
     th, alpha = cv2.threshold(np.array(rgb), 0, 255, cv2.THRESH_BINARY)
 
-    alpha = cv2.GaussianBlur(alpha, (7, 7), 0)
+    alpha = cv2.GaussianBlur(alpha, (15, 15), 0)
 
     alpha = alpha.astype(float) / 255
 
@@ -49,7 +51,13 @@ def decode_segmap(image, source, nc = 21):
     return outImage / 255
 
 def segment(model, image):
-    img = Image.open(image)
+    cropper = Cropper()
+    cropped_array = cropper.crop(image)
+    img = Image.fromarray(cropped_array)
+    
+    name = 'cropped.' + image[-3:]
+    img.save(name)
+
     plt.imshow(img); plt.axis('off'); plt.show()
 
     trf = T.Compose([T.Resize(256),
@@ -60,7 +68,11 @@ def segment(model, image):
     inp = trf(img).unsqueeze(0)
     out = model(inp)['out']
     om = torch.argmax(out.squeeze(), dim = 0).detach().cpu().numpy()
-    rgb = decode_segmap(om, image)
+    rgb = decode_segmap(om, name)
+
+    if os.path.isfile(name):
+        os.remove(name)
+
     plt.imshow(rgb); plt.axis('off'); plt.show()
 
 if len(sys.argv) != 2:
