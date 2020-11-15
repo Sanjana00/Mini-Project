@@ -55,7 +55,8 @@ def segment(model, image):
     cropped_array = cropper.crop(image)
     img = Image.fromarray(cropped_array)
     
-    name = 'cropped.' + image[-3:]
+    idx = image.index('.')
+    name = 'temp' + image[idx:]
     img.save(name)
 
     plt.imshow(img); plt.axis('off'); plt.show()
