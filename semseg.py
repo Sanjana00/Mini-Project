@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from torchvision import models
 import numpy as np
 import sys
